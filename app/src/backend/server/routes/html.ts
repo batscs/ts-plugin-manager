@@ -2,7 +2,7 @@
 import { Router, Request, Response } from 'express';
 const router = Router();
 
-import db from "../../utils/common/databaseJson";
+import db from "../../utils/common/database";
 
 router.get('/', (req: Request, res: Response) => {
     res.render("index", {});
