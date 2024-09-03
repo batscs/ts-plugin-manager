@@ -4,12 +4,12 @@ import express from 'express';
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import less from 'less-middleware';
-import path from "node:path";
+import path from "path";
 
 import router from './routes/html';
 import logger from './middleware/logger';
 
-import manager from "../utils/scales/manager";
+import manager from "../utils/scaling/manager";
 
 const app = express();
 const port = 3000;
@@ -34,10 +34,11 @@ app.use('/static/js', express.static(path.join(__dirname, "../../frontend/js")))
 app.use('/static/resources', express.static(path.join(__dirname, "../../../data/resources")));
 
 app.use(logger);
-app.use(router);
 
-manager.loadPlugins();
+manager.loadPlugins(app);
 manager.startPlugins();
+
+app.use(router);
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

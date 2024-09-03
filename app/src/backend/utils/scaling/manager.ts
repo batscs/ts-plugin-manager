@@ -1,41 +1,46 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as chokidar from "chokidar";
-import { Plugin } from './api';
+import { Plugin } from './scaleAPI';
+import express from "express";
 
 class PluginManager {
     private static pluginsDirectory: string = path.join(__dirname, "..", "..", "..", "..", 'scales');
-    private static plugins: Record<string, Plugin> = {};
+    // TODO Maybe getter statt public
+    public static plugins: Record<string, Plugin> = {};
     private static pluginStates: Record<string, boolean> = {}; // Track plugin start/stop states
 
-    // Function to discover and load plugins
-    public static loadPlugins(): void {
+    public static loadPlugins(app: any): void {
         const pluginDirs = fs.readdirSync(PluginManager.pluginsDirectory);
 
         pluginDirs.forEach((dir) => {
             const pluginPath = path.join(PluginManager.pluginsDirectory, dir);
 
             if (fs.statSync(pluginPath).isDirectory()) {
-                try {
-                    const pluginModule = require(pluginPath);
-                    const plugin: Plugin = pluginModule.default;
-
-                    if (!PluginManager.plugins[plugin.name]) { // Use plugin's name attribute
+                if (!PluginManager.plugins[dir]) { // Only load if not already registered
+                    try {
+                        const pluginModule = require(pluginPath);
+                        const plugin: Plugin = pluginModule.default;
                         PluginManager.plugins[plugin.name] = plugin;
                         PluginManager.pluginStates[plugin.name] = false; // Mark plugin as registered but not started
-                        console.log(`Manager: Plugin ${plugin.name} (v${plugin.version}) registered.`);
+                        console.log(`Manager: Plugin ${plugin.name} registered.`);
                         plugin.initialize();
-                    } else {
-                        console.log(`Manager: Plugin ${plugin.name} is already registered.`);
+                        const router = express.Router();
+
+                        // Register endpoints with the new router
+                        plugin.registerEndpoints(router);
+
+                        // Use the router under /plugin/{pluginName}
+                        app.use(`/plugin/${plugin.name}`, router);
+                    } catch (error) {
+                        console.error(`Manager: Failed to load plugin at ${pluginPath}:`, error);
                     }
-                } catch (error) {
-                    console.error(`Manager: Failed to load plugin at ${pluginPath}:`, error);
+                } else {
+                    console.log(`Manager: Plugin ${dir} is already registered.`);
                 }
             }
         });
     }
 
-    // Function to start all registered plugins
     public static startPlugins(): void {
         for (const [name, plugin] of Object.entries(PluginManager.plugins)) {
             if (!PluginManager.pluginStates[name]) { // Only start if not already started
@@ -52,7 +57,6 @@ class PluginManager {
         }
     }
 
-    // Function to start a specific plugin by name
     public static startPlugin(name: string): void {
         const plugin = PluginManager.plugins[name];
         if (plugin && !PluginManager.pluginStates[name]) {
@@ -70,7 +74,6 @@ class PluginManager {
         }
     }
 
-    // Function to stop all registered plugins
     public static stopPlugins(): void {
         for (const [name, plugin] of Object.entries(PluginManager.plugins)) {
             if (PluginManager.pluginStates[name]) { // Only stop if started
@@ -87,7 +90,6 @@ class PluginManager {
         }
     }
 
-    // Function to stop a specific plugin by name
     public static stopPlugin(name: string): void {
         const plugin = PluginManager.plugins[name];
         if (plugin && PluginManager.pluginStates[name]) {
