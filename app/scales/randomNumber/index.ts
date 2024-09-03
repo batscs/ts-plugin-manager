@@ -50,13 +50,6 @@ class RandomNumberPlugin implements Plugin {
         this.running = false;
     }
 
-    renderContent(): string {
-        const pugFilePath = path.join(__dirname, 'content.pug');
-        const compiledFunction = pug.compileFile(pugFilePath);
-
-        return compiledFunction();
-    }
-
     registerEndpoints(router: Router): void {
 
         router.get('/data', (req, res) => {
@@ -67,6 +60,13 @@ class RandomNumberPlugin implements Plugin {
                 console.error(`Error reading the database file: ${error}`);
                 res.status(500).send('Failed to read data.');
             }
+        });
+
+        router.get('/', (req, res) => {
+            const pugFilePath = path.join(__dirname, 'content.pug');
+            const compiledFunction = pug.compileFile(pugFilePath);
+
+            res.render('plugin', { pluginContent: compiledFunction() });
         });
 
     }

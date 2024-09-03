@@ -1,2 +1,26 @@
-p 123
-p 456
+div.flex-row.gap-10px
+    a#1 0
+    a#2 0
+    a#3 0
+    a#4 0
+    a#5 0
+
+script.
+    function fetchData() {
+        fetch('/plugin/RandomNumberPlugin/data')
+            .then(response => response.json())
+            .then(data => {
+                const numbers = data.numbers;
+                if (numbers && numbers.length >= 5) {
+                    document.getElementById('1').textContent = numbers[0];
+                    document.getElementById('2').textContent = numbers[1];
+                    document.getElementById('3').textContent = numbers[2];
+                    document.getElementById('4').textContent = numbers[3];
+                    document.getElementById('5').textContent = numbers[4];
+                }
+            })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+
+    // Call fetchData every 1 second
+    setInterval(fetchData, 1000);
