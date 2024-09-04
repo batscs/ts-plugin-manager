@@ -26,6 +26,31 @@ export default class Authentication {
         return token;
     }
 
+    static registerToken(userid : string): string {
+        // TODO associate a token with a user id
+        return this.generateToken();
+    }
+
+    static getUserByToken(token : string): string | null {
+        // TODO aus tokenSet -> tokenMap auslesen?
+        //  return userid
+        return null;
+    }
+
+    static getUserPermissions(userid : string): string[] {
+        // TODO aus users.json auslesen
+        return [];
+    }
+
+    static grantPermission(userid: string, permission: string): void {
+        // TODO users.json überschreiben
+    }
+
+    static login(user: string, password: string): string | null {
+        // TODO return userid falls login successfull sonst null
+        return null;
+    }
+
     static authenticateToken(token: string): boolean {
 
         // Iterate through the Set and check if the token exists

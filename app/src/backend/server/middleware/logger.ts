@@ -10,7 +10,7 @@ const logger = (req: Request, res: Response, next: NextFunction) => {
     const query : string = JSON.stringify(req.query);
     const body : string = JSON.stringify(req.body);
 
-    console.log(`[${timestamp}] IP: ${ip} URL: ${url} QUERY: ${query} BODY: ${body} PARAMS: ${params}`);
+    console.log(`[${timestamp}] IP: ${ip} URL: ${url} QUERY: ${query} BODY: ${body} PARAMS: ${params} PERMS: ${req.permissions}`);
 
     next();
 };

@@ -6,10 +6,12 @@ import cookieParser from "cookie-parser";
 import less from 'less-middleware';
 import path from "path";
 
-import router from './routes/html';
+import router_html from './routes/html';
+import router_api from './routes/api';
 import logger from './middleware/logger';
 
 import manager from "../utils/scaling/manager";
+import { permissionQuery } from './middleware/permissionQuery';
 
 const app = express();
 const port = 3000;
@@ -23,9 +25,12 @@ app.use('/static/css', less(lessSrcPath, {
     force: true,
 }));
 
-
 app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(permissionQuery);
+
 app.use(bodyParser.urlencoded({ extended: true }));
+
 app.set('views', path.join(__dirname, '../../frontend/pug'));
 app.set('view engine', 'pug');
 
@@ -35,10 +40,13 @@ app.use('/static/resources', express.static(path.join(__dirname, "../../../data/
 
 app.use(logger);
 
-manager.loadPlugins(app);
-manager.startPlugins();
+app.use(router_html);
+app.use(router_api);
 
-app.use(router);
+manager.loadPlugins(app);
+manager.loadPlugins(app);
+
+manager.startPlugins();
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

@@ -29,13 +29,16 @@ class RandomNumberPlugin implements Plugin {
     }
 
     start(): void {
-        // Join the current directory with the script path to ensure correct execution
-        const scriptPath = path.join(__dirname, 'core.py');
+        if (!this.pythonProcess) {
+            // Join the current directory with the script path to ensure correct execution
+            const scriptPath = path.join(__dirname, 'core.py');
 
-        // Spawn a child process to run the python script
-        this.pythonProcess = spawn('python3', [scriptPath], {
-            cwd: __dirname // Current working directory where the script should run
-        });
+            // Spawn a child process to run the python script
+            this.pythonProcess = spawn('python3', [scriptPath], {
+                cwd: __dirname // Current working directory where the script should run
+            });
+
+        }
 
         this.running = true;
     }
@@ -69,6 +72,10 @@ class RandomNumberPlugin implements Plugin {
             res.render('plugin', { pluginContent: compiledFunction() });
         });
 
+    }
+
+    getPermissions(): string[] {
+        return ["rnums:view"];
     }
 }
 

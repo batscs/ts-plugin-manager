@@ -16,10 +16,13 @@ class PluginManager {
             const pluginPath = path.join(PluginManager.pluginsDirectory, dir);
 
             if (fs.statSync(pluginPath).isDirectory()) {
-                if (!PluginManager.plugins[dir]) { // Only load if not already registered
+                const pluginModule = require(pluginPath);
+                // TODO catch if not a plugin interface implementation
+                const plugin: Plugin = pluginModule.default;
+                const name : string = plugin.name;
+
+                if (!PluginManager.plugins[name]) { // Only load if not already registered
                     try {
-                        const pluginModule = require(pluginPath);
-                        const plugin: Plugin = pluginModule.default;
                         PluginManager.plugins[plugin.name] = plugin;
                         PluginManager.pluginStates[plugin.name] = false; // Mark plugin as registered but not started
                         console.log(`Manager: Plugin ${plugin.name} registered.`);
@@ -106,6 +109,21 @@ class PluginManager {
             console.log(`Manager: Plugin ${name} is not registered.`);
         }
     }
+
+    public static getPluginNames(): string[] {
+        return Object.keys(PluginManager.plugins);
+    }
+
+    public static getPermissions(): string[] {
+        let result: string[] = [];
+
+        for (const plugin  of Object.values(PluginManager.plugins)) {
+            result = result.concat(plugin.getPermissions());
+        }
+
+        return result;
+    }
+
 }
 
 export default PluginManager;

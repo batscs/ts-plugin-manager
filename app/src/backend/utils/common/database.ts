@@ -20,7 +20,7 @@ const openFile = (filename : string) => {
 }
 
 export default class db {
-    static getContent = () => {
-        return JSON.parse(openFile("config"));
+    static getUsers = () => {
+        return JSON.parse(openFile("users"));
     }
 }

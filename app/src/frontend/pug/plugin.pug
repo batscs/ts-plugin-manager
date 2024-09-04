@@ -1,5 +1,9 @@
 extends fragments/structure
 
+append script
+    script(src="/static/js/navigation.js")
+
 append body
+    include fragments/navigation
     div.content
         != pluginContent

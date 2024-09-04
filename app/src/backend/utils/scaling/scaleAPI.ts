@@ -9,5 +9,7 @@ export interface Plugin {
     start(): void;
     stop(): void;
 
+    getPermissions(): string[];
+
     registerEndpoints(router: Router): void;
 }

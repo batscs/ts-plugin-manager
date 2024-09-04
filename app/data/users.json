@@ -1,0 +1,8 @@
+{
+  "username": "bats",
+  "password": "123",
+  "id": "123-123-123",
+  "permissions": [
+    "rnums:view"
+  ]
+}
