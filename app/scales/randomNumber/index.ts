@@ -5,6 +5,7 @@ import * as fs from 'fs';
 // @ts-ignore
 import pug from "pug";
 import {Request, Response, Router} from 'express';
+import Permissions from "../../src/backend/utils/common/permission";
 
 class RandomNumberPlugin implements Plugin {
     name = 'RandomNumberPlugin';
@@ -13,6 +14,8 @@ class RandomNumberPlugin implements Plugin {
 
     private pythonProcess: ChildProcess | null = null;
     private dbPath: string;
+
+    private PERMISSION_ACCESS = "rnum:access";
 
     constructor() {
         this.dbPath = path.join(__dirname, 'numbers.json');
@@ -69,13 +72,23 @@ class RandomNumberPlugin implements Plugin {
             const pugFilePath = path.join(__dirname, 'content.pug');
             const compiledFunction = pug.compileFile(pugFilePath);
 
-            res.render('plugin', { pluginContent: compiledFunction() });
+            const perms : Permissions = req.permission;
+            if (perms.hasPermission(this.PERMISSION_ACCESS)) {
+                res.render('plugin', { pluginContent: compiledFunction() });
+            } else {
+                res.send("no perms");
+            }
+
         });
 
     }
 
     getPermissions(): string[] {
-        return ["rnums:view"];
+        return ["rnum:view", "rnum:access"];
+    }
+
+    isAccessible(permissions: Permissions): boolean {
+        return permissions.hasPermission(this.PERMISSION_ACCESS);
     }
 }
 

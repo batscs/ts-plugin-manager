@@ -9,6 +9,21 @@ class PluginManager {
     public static plugins: Record<string, Plugin> = {};
     private static pluginStates: Record<string, boolean> = {}; // Track plugin start/stop states
 
+    public static PERMISSION_ADMIN: string = "pangolin:admin";
+
+    public static healthCheck(): boolean {
+        // TODO Check if no plugins plugin.getPermissions() have overlapping permission names
+        //  also considering this.getPermissions()
+
+        // TODO Check if no user has permissions that are not used by ANY plugin
+
+        return true;
+    }
+
+    public static getPermissions(): string[] {
+        return [this.PERMISSION_ADMIN];
+    }
+
     public static loadPlugins(app: any): void {
         const pluginDirs = fs.readdirSync(PluginManager.pluginsDirectory);
 
@@ -114,7 +129,7 @@ class PluginManager {
         return Object.keys(PluginManager.plugins);
     }
 
-    public static getPermissions(): string[] {
+    public static getPluginPermissions(): string[] {
         let result: string[] = [];
 
         for (const plugin  of Object.values(PluginManager.plugins)) {

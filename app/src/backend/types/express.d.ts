@@ -5,7 +5,7 @@ import { Permissions } from '../utils/permission';
 declare global {
     namespace Express {
         interface Request {
-            permission?: Permissions;
+            permission: Permissions;
         }
     }
 }
