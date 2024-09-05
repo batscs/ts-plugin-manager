@@ -1,9 +1,10 @@
 import crypto from "crypto";
-import {strict} from "node:assert";
+import db from "./database";
 
 type TokenEntry = {
     token: string;
     timestamp: number; // store timestamp in milliseconds
+    userid: string; // associate the token with a user ID
 };
 
 export default class Authentication {
@@ -11,62 +12,61 @@ export default class Authentication {
     private static tokenSet: Set<TokenEntry> = new Set();
 
     static generateToken(): string {
-        // Generate a new token
-        const token : string = crypto.randomUUID();
+        // Generate and return a new token without any additional logic
+        return crypto.randomUUID();
+    }
+
+    static registerToken(userid: string): string {
+        // Generate a token
+        const token: string = this.generateToken();
 
         // Get the current timestamp
-        const now : number = Date.now();
+        const now: number = Date.now();
 
-        // Add the token and timestamp to the Set
-        this.tokenSet.add({ token, timestamp: now });
+        // Add the token, timestamp, and userid to the Set
+        this.tokenSet.add({ token, timestamp: now, userid });
 
         // Clean up tokens older than 14 days
         this.cleanupOldTokens();
 
+        // Return the generated token
         return token;
     }
 
-    static registerToken(userid : string): string {
-        // TODO associate a token with a user id
-        return this.generateToken();
+
+    static getUserByToken(token: string): string | null {
+        // Find the entry with the given token
+        const entry = [...this.tokenSet].find(entry => entry.token === token);
+        return entry ? entry.userid : null;
     }
 
-    static getUserByToken(token : string): string | null {
-        // TODO aus tokenSet -> tokenMap auslesen?
-        //  return userid
-        return null;
-    }
-
-    static getUserPermissions(userid : string): string[] {
-        // TODO aus users.json auslesen
-        return [];
+    static getUserPermissions(userid: string): string[] {
+        const users = db.getUsers();
+        const user = users.find(user => user.id === userid);
+        return user ? user.permissions : [];
     }
 
     static grantPermission(userid: string, permission: string): void {
-        // TODO users.json überschreiben
+        const users = db.getUsers();
+        const user = users.find(user => user.id === userid);
+        if (user && !user.permissions.includes(permission)) {
+            user.permissions.push(permission);
+            db.saveUsers(users); // Assuming `db.saveUsers` writes users back to the DB
+        }
     }
 
-    static login(user: string, password: string): string | null {
-        // TODO return userid falls login successfull sonst null
+    static login(username: string, password: string): string | null {
+        const users = db.getUsers();
+        const user = users.find(user => user.username === username);
+        if (user && user.password === password) {
+            return user.id;
+        }
         return null;
     }
 
     static authenticateToken(token: string): boolean {
-
-        // Iterate through the Set and check if the token exists
-        for (let entry of this.tokenSet) {
-            if (entry.token === token) {
-                return true; // Token is valid
-            }
-        }
-
-        // If the token was not found, return false
-        return false;
-    }
-
-    static verifyPassword(password: string): boolean {
-        // TODO DB verwenden um password zu prüfen
-        return true;
+        // Check if the token exists in the Set
+        return !![...this.tokenSet].find(entry => entry.token === token);
     }
 
     private static cleanupOldTokens(): void {

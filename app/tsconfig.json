@@ -9,6 +9,6 @@
     "strict": true,
     "skipLibCheck": true,
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "scales/**/*"],
   "exclude": ["node_modules"]
 }

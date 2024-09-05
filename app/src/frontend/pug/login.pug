@@ -1,0 +1,7 @@
+extends plugin
+
+append content
+    form(method="POST" action="/api/login").flex-column.gap-10px
+        input(type="text" placeholder="username")
+        input(type="text" placeholder="password")
+        input(type="submit" value="login")

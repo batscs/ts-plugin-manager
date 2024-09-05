@@ -1,8 +1,11 @@
 // src/backend/types/express.d.ts
-import { Request } from 'express';
+import * as express from 'express';
+import { Permissions } from '../utils/permission';
 
-declare module 'express-serve-static-core' {
-    interface Request {
-        permissions?: string[]; // Replace 'any' with the specific type if available
+declare global {
+    namespace Express {
+        interface Request {
+            permission?: Permissions;
+        }
     }
 }

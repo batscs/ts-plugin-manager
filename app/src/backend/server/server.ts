@@ -11,7 +11,7 @@ import router_api from './routes/api';
 import logger from './middleware/logger';
 
 import manager from "../utils/scaling/manager";
-import { permissionQuery } from './middleware/permissionQuery';
+import { permissionParser } from './middleware/permission-parser';
 
 const app = express();
 const port = 3000;
@@ -27,7 +27,7 @@ app.use('/static/css', less(lessSrcPath, {
 
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(permissionQuery);
+app.use(permissionParser);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 

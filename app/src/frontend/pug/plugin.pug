@@ -6,4 +6,5 @@ append script
 append body
     include fragments/navigation
     div.content
-        != pluginContent
+        block content
+            != pluginContent

@@ -1,12 +1,14 @@
 const fs = require('fs');
 const path = require('path');
+import {User} from "../../types/database";
+
 
 /**
  * Öffnet Datenbankdatei aus dem data-Ordner
  * @param {string} filename Dateiname des JSON-Datei
  * @returns Datei-Inhalt
  */
-const openFile = (filename : string) => {
+const openFile = (filename : string): string => {
     // Pfad aufgrund unterschiedlicher Slashes bei Ordnerpfaden (Windows vs. Unix) dynamisch aufbauen
     const pathToFile = path.join('data', `${filename}.json`);
 
@@ -19,8 +21,21 @@ const openFile = (filename : string) => {
     return filecontent;
 }
 
+const writeFile = (filename : string, data: string): void => {
+    try {
+        const pathToFile = path.join('data', `${filename}.json`);
+        fs.writeFileSync(pathToFile, data, { encoding: 'utf8' });
+    } catch (error) {
+        console.error(`Error writing file ${filename}.json:`, error);
+    }
+}
+
 export default class db {
-    static getUsers = () => {
+    static getUsers = (): User[] => {
         return JSON.parse(openFile("users"));
+    }
+
+    static saveUsers(users: User[]) {
+        writeFile("users", JSON.stringify(users));
     }
 }
