@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Plugin } from './scaleAPI';
+import {Plugin} from './scaleAPI';
 import express from "express";
 
 class PluginManager {
@@ -19,6 +19,7 @@ class PluginManager {
 
         // TODO Check if no user has permissions that are not used by ANY plugin
 
+        // TODO Check if all plugin permissions follow format ${name}:.+
         return true;
     }
 
@@ -27,6 +28,8 @@ class PluginManager {
     }
 
     public static loadPlugins(app: any): void {
+        // TODO Only loadPlugins if healthCheck() returns true
+
         const pluginDirs = fs.readdirSync(PluginManager.pluginsDirectory);
 
         pluginDirs.forEach((dir) => {
@@ -141,6 +144,9 @@ class PluginManager {
         return result;
     }
 
+    public static getPlugin(name: string): Plugin | null {
+        return PluginManager.plugins[name] || null;
+    }
 }
 
 export default PluginManager;

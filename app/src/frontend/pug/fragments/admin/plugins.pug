@@ -1,0 +1,22 @@
+table
+    thead
+        tr
+            th#th-name Name
+            th#th-status Status
+            th#th-actions Actions
+    tbody
+        each plugin in plugins
+            tr(id=`plugin-${plugin}`)
+                td=plugin
+                td.status ...
+                td.flex-row.gap-10px
+                    button.start Start
+                    button.stop Stop
+                    button.select Select
+
+style.
+    td {
+
+        box-sizing: border-box;
+        min-width: 50px;
+    }

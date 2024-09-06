@@ -1,13 +1,13 @@
-// Function to handle tab selection and API requests
+// Function to handle tab selection, API requests, and dynamic JS injection
 function setupTabNavigation(containerSelector, linkSelector, activeClass, contentContainerSelector) {
     const container = document.querySelector(containerSelector);
     const contentContainer = document.querySelector(contentContainerSelector);
 
     // Mapping tabs to their respective API endpoints
     const tabEndpoints = {
-        'users': '/api/content/admin/users',
-        'plugins': '/api/content/admin/plugins',
-        'settings': '/api/content/admin/settings'
+        'users': '/api/html/admin/users',
+        'plugins': '/api/html/admin/plugins',
+        'settings': '/api/html/admin/settings'
     };
 
     // Add click event to all matching links within the container
@@ -39,6 +39,9 @@ function setupTabNavigation(containerSelector, linkSelector, activeClass, conten
 
                     // Update the content container with the fetched HTML
                     contentContainer.innerHTML = htmlContent;
+
+                    // Dynamically inject JavaScript for the selected tab
+                    injectTabScript(tabId);
                 } catch (error) {
                     console.error(error);
                     contentContainer.innerHTML = `<p>Error loading content for ${tabId}</p>`;
@@ -48,5 +51,23 @@ function setupTabNavigation(containerSelector, linkSelector, activeClass, conten
     });
 }
 
+// Function to inject the script for the selected tab
+function injectTabScript(tabId) {
+    // Remove any previously injected script
+    const existingScript = document.querySelector('script[data-injected="true"]');
+    if (existingScript) {
+        existingScript.remove();
+    }
+
+    // Create a new script element
+    const script = document.createElement('script');
+    script.src = `/static/js/fragments/admin/${tabId}.js`;
+    script.async = true;
+    script.setAttribute('data-injected', 'true'); // Mark this script as dynamically injected
+
+    // Append the new script to the body
+    document.body.appendChild(script);
+}
+
 // Initialize tab navigation
-setupTabNavigation('.header', 'a', 'selected', '#content');
+setupTabNavigation('.header', 'a', 'selected', '#canvas');

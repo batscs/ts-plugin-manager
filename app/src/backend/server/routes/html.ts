@@ -3,33 +3,21 @@ import { Router, Request, Response } from 'express';
 const router = Router();
 
 import db from "../../utils/common/database";
-import PluginManager from "../../utils/scaling/manager";
-import Permissions from "../../utils/common/permission";
+import auth from "../../utils/common/authentication";
 import manager from "../../utils/scaling/manager";
+import Permissions from "../../utils/common/permission";
+import pug from "pug";
+import path from "path";
 
-router.get('/', (req: Request, res: Response) => {
-    res.render("index");
-});
+const dir: string = path.join(__dirname, "..", "..", "..", "frontend", "pug");
+const dir_admin: string = path.join(dir, "fragments", "admin");
 
-router.get('/login', (req: Request, res: Response) => {
-    const perms: Permissions = req.permission;
+router.get('/api/html/admin/plugins', (req: Request, res: Response) => {
+    // TODO Permisisons checking
 
-    if (perms.isGuest()) {
-        res.render("login");
-    } else {
-        res.redirect("/");
-    }
-});
-
-router.get('/admin', (req: Request, res: Response) => {
-    const perms: Permissions = req.permission;
-
-    if (perms.hasPermission(manager.PERMISSION_ADMIN)) {
-        res.render("admin");
-    } else {
-        res.redirect("/error/no-permissions");
-    }
-
+    const dir_file = path.join(dir_admin, "plugins.pug");
+    const compiledFunction = pug.compileFile(dir_file);
+    res.send(compiledFunction({plugins: manager.getPluginNames()}));
 });
 
 export default router;

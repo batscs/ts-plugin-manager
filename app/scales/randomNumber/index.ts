@@ -8,14 +8,14 @@ import {Request, Response, Router} from 'express';
 import Permissions from "../../src/backend/utils/common/permission";
 
 class RandomNumberPlugin implements Plugin {
-    name = 'rnum';
-    version = '1.0.0';
+    name: string = 'rNums';
+    version: string = '1.0.0';
     running: boolean = false;
 
     private pythonProcess: ChildProcess | null = null;
-    private dbPath: string;
+    private readonly dbPath: string;
 
-    private PERMISSION_ACCESS = "rnum:access";
+    private PERMISSION_ACCESS = `${this.name}:access`;
 
     constructor() {
         this.dbPath = path.join(__dirname, 'numbers.json');
@@ -58,16 +58,6 @@ class RandomNumberPlugin implements Plugin {
 
     registerEndpoints(router: Router): void {
 
-        router.get('/data', (req, res) => {
-            try {
-                const data = fs.readFileSync(this.dbPath, 'utf-8');
-                res.json(JSON.parse(data));
-            } catch (error) {
-                console.error(`Error reading the database file: ${error}`);
-                res.status(500).send('Failed to read data.');
-            }
-        });
-
         router.get('/', (req, res) => {
             const pugFilePath = path.join(__dirname, 'content.pug');
             const compiledFunction = pug.compileFile(pugFilePath);
@@ -81,6 +71,16 @@ class RandomNumberPlugin implements Plugin {
 
         });
 
+        router.get('/data', (req, res) => {
+            try {
+                const data = fs.readFileSync(this.dbPath, 'utf-8');
+                res.json(JSON.parse(data));
+            } catch (error) {
+                console.error(`Error reading the database file: ${error}`);
+                res.status(500).send('Failed to read data.');
+            }
+        });
+
     }
 
     getPermissions(): string[] {
@@ -89,6 +89,10 @@ class RandomNumberPlugin implements Plugin {
 
     isAccessible(permissions: Permissions): boolean {
         return permissions.hasPermission(this.PERMISSION_ACCESS);
+    }
+
+    getState(): string {
+        return this.running ? "running" : "stopped";
     }
 }
 

@@ -6,8 +6,9 @@ import cookieParser from "cookie-parser";
 import less from 'less-middleware';
 import path from "path";
 
-import router_html from './routes/html';
+import router_web from './routes/web';
 import router_api from './routes/api';
+import router_html from './routes/html';
 import logger from './middleware/logger';
 
 import manager from "../utils/scaling/manager";
@@ -40,8 +41,9 @@ app.use('/static/resources', express.static(path.join(__dirname, "../../../data/
 
 app.use(logger);
 
-app.use(router_html);
+app.use(router_web);
 app.use(router_api);
+app.use(router_html);
 
 manager.loadPlugins(app);
 manager.loadPlugins(app);

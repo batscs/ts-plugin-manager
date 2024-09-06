@@ -1,16 +1,46 @@
 @import "variables";
 
 body {
-  background-color: darkgray;
+  background-color: transparent;
 
   display: flex;
   flex-direction: row;
+  gap: 10px;
+}
+
+table {
+  border-spacing: 0;
+
+  td,th {
+    border-bottom: 2px solid @color-highlight;
+    padding: 10px 20px;
+    min-width: 50px;
+  }
+
+  tr:hover:not(:has(th)) {
+    background-color: lighten(@color-highlight, 35%);
+  }
+}
+
+button {
+  border: none;
+  outline: none;
+  background-color: @color-highlight;
+  color: @color-highlight-contrast;
+  padding: 5px 10px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: @border-radius;
 }
 
 .content {
   padding: 50px;
   background-color: @color-main;
   flex-grow: 1;
+}
+
+.shadow {
+  box-shadow: 0 5px 10px #EFEFEF;
 }
 
 * {

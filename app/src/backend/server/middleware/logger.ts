@@ -14,6 +14,11 @@ const logger = (req: Request, res: Response, next: NextFunction) => {
 
     console.log(`[${timestamp}] IP: ${ip} URL: ${req.method} ${url} QUERY: ${query} BODY: ${body} PARAMS: ${params} PERMISSIONS: ${perms}`);
 
+    // TODO Maybe add option to make a log silent (no log)
+    //  expand Express.Request by request.silent = false by default
+    //  for this to work next() needs to be executed first, then log
+    //  so req.silent can be checked
+
     next();
 };
 

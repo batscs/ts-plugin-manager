@@ -7,8 +7,9 @@ append style
     link(rel='stylesheet', href='/static/css/admin.css')
 
 append content
-    div.header
-        a#users.selected Users
-        a#plugins Plugins
-        a#settings Settings
-    div#canvas
+    div#manager.shadow.flex-column.flex-grow
+        div.header
+            a#users.selected Users
+            a#plugins Plugins
+            a#settings Settings
+        div#canvas

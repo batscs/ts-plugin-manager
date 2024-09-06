@@ -9,7 +9,47 @@ import manager from "../../utils/scaling/manager";
 import Permissions from "../../utils/common/permission";
 
 router.get('/api/plugins', (req: Request, res: Response) => {
+    // TODO Permisisons checking
+
     res.send({"plugins": manager.getPluginNames()});
+});
+
+router.get("/api/admin/plugin/:name/info", (req: Request, res: Response) => {
+    // TODO Permisisons checking
+    const name = req.params.name;
+    const plugin = manager.getPlugin(name);
+
+    if (plugin == null) {
+        res.send({"status": "?"});
+    } else {
+        res.send({"status": plugin.getState()});
+    }
+});
+
+router.get("/api/admin/plugin/:name/stop", (req: Request, res: Response) => {
+    // TODO Permisisons checking
+    const name = req.params.name;
+    const plugin = manager.getPlugin(name);
+
+    if (plugin == null) {
+        res.send({"error": "no plugin"});
+    } else {
+        plugin.stop();
+        res.send({"status": plugin.getState()});
+    }
+});
+
+router.get("/api/admin/plugin/:name/start", (req: Request, res: Response) => {
+    // TODO Permisisons checking
+    const name = req.params.name;
+    const plugin = manager.getPlugin(name);
+
+    if (plugin == null) {
+        res.send({"error": "no plugin"});
+    } else {
+        plugin.start();
+        res.send({"status": plugin.getState()});
+    }
 });
 
 router.get('/api/navigation', (req: Request, res: Response) => {
@@ -35,6 +75,9 @@ router.get('/api/navigation', (req: Request, res: Response) => {
     }
 
     result.push({name: "-----------", url: ""});
+
+    // TODO zu jedem plugin {} noch ergänzen {running: true/false}
+    //  im frontend dann anzeigen lassen ob running oder nicht anklickbar
 
     Object.values(manager.plugins).forEach(plugin => {
         if (plugin.isAccessible(perms)) {
