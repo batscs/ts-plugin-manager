@@ -8,7 +8,7 @@ import {Request, Response, Router} from 'express';
 import Permissions from "../../src/backend/utils/common/permission";
 
 class RandomNumberPlugin implements Plugin {
-    name = 'RandomNumberPlugin';
+    name = 'rnum';
     version = '1.0.0';
     running: boolean = false;
 

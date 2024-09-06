@@ -1,8 +1,10 @@
 export default class Permissions {
     private permissions: string[];
+    private userid: string | null;
 
-    constructor(permissions: string[]) {
+    constructor(userid: string | null, permissions: string[]) {
         this.permissions = permissions;
+        this.userid = userid;
     }
 
     public getPermissions(): string[] {
@@ -22,5 +24,12 @@ export default class Permissions {
     // Method to check if any of the given permissions are granted
     public hasAnyPermission(permissions: string[]): boolean {
         return permissions.some(permission => this.permissions.includes(permission));
+    }
+
+    /**
+     * True if session has no token or no token that can be associated with a user.
+     */
+    public isGuest(): boolean {
+        return this.userid == null;
     }
 }

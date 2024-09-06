@@ -1,0 +1,14 @@
+extends plugin
+
+append script
+    script(src="/static/js/admin.js")
+
+append style
+    link(rel='stylesheet', href='/static/css/admin.css')
+
+append content
+    div.header
+        a#users.selected Users
+        a#plugins Plugins
+        a#settings Settings
+    div#canvas

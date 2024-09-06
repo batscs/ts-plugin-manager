@@ -12,6 +12,8 @@ class PluginManager {
     public static PERMISSION_ADMIN: string = "pangolin:admin";
 
     public static healthCheck(): boolean {
+        // TODO Check if no plugin has empty name or invalid name (like having space ' ' in the name or weird characters)
+
         // TODO Check if no plugins plugin.getPermissions() have overlapping permission names
         //  also considering this.getPermissions()
 

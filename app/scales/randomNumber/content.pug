@@ -7,7 +7,7 @@ div.flex-row.gap-10px
 
 script.
     function fetchData() {
-        fetch('/plugin/RandomNumberPlugin/data')
+        fetch('/plugin/rnum/data')
             .then(response => response.json())
             .then(data => {
                 const numbers = data.numbers;

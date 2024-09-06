@@ -22,15 +22,19 @@ router.get('/api/navigation', (req: Request, res: Response) => {
     const token: string = req.cookies.token;
     const perms: Permissions = req.permission;
 
-    if (!token) {
-        result.push({name: "Login", url: "/login"});
-    }
+    result.push({name: "Homepage", url: "/"});
 
     if (perms.hasPermission(manager.PERMISSION_ADMIN)) {
         result.push({name: "Management", url: "/admin"});
     }
 
-    result.push({name: "Homepage", url: "/"});
+    if (perms.isGuest()) {
+        result.push({name: "Login", url: "/login"});
+    } else {
+        result.push({name: "My Profile", url: "/profile"});
+    }
+
+    result.push({name: "-----------", url: ""});
 
     Object.values(manager.plugins).forEach(plugin => {
         if (plugin.isAccessible(perms)) {
