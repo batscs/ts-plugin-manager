@@ -14,6 +14,7 @@ class RandomNumberPlugin implements Plugin {
 
     private pythonProcess: ChildProcess | null = null;
     private readonly dbPath: string;
+    private logs: string[] = [];
 
     private PERMISSION_ACCESS = `${this.name}:access`;
 
@@ -22,12 +23,14 @@ class RandomNumberPlugin implements Plugin {
     }
 
     initialize(): void {
-        console.log(`${this.name} initialized.`);
-
+        this.addLog(`${this.name}: initializing.`);
         // Create an empty JSON database if it does not exist
+
         if (!fs.existsSync(this.dbPath)) {
             fs.writeFileSync(this.dbPath, JSON.stringify({ numbers: [] }));
-            console.log(`${this.name}: Created empty JSON database.`);
+            this.addLog(`${this.name}: created empty JSON Database (numbers.json).`);
+        } else {
+            this.addLog(`${this.name}: JSON Database (numbers.json) already exists.`);
         }
     }
 
@@ -41,6 +44,9 @@ class RandomNumberPlugin implements Plugin {
                 cwd: __dirname // Current working directory where the script should run
             });
 
+            this.addLog(`${this.name}: started python process.`);
+        } else {
+            this.addLog(`${this.name}: attempted to start but python process already running.`);
         }
 
         this.running = true;
@@ -51,6 +57,9 @@ class RandomNumberPlugin implements Plugin {
             console.log(`${this.name} stopped.`);
             this.pythonProcess.kill();  // Terminate the Python script
             this.pythonProcess = null;
+            this.addLog(`${this.name}: stopped python process.`);
+        } else {
+            this.addLog(`${this.name}: attempted to stop but python process already stopped.`);
         }
 
         this.running = false;
@@ -66,7 +75,7 @@ class RandomNumberPlugin implements Plugin {
             if (perms.hasPermission(this.PERMISSION_ACCESS)) {
                 res.render('plugin', { pluginContent: compiledFunction() });
             } else {
-                res.send("no perms");
+                res.send("no permissions");
             }
 
         });
@@ -84,7 +93,7 @@ class RandomNumberPlugin implements Plugin {
     }
 
     getPermissions(): string[] {
-        return ["rnum:view", "rnum:access"];
+        return [this.PERMISSION_ACCESS];
     }
 
     isAccessible(permissions: Permissions): boolean {
@@ -93,6 +102,14 @@ class RandomNumberPlugin implements Plugin {
 
     getState(): string {
         return this.running ? "running" : "stopped";
+    }
+
+    getLogs(): string[] {
+        return this.logs;
+    }
+
+    addLog(log: string): void {
+        this.logs.push(log);
     }
 }
 

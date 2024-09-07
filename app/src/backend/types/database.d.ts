@@ -4,3 +4,6 @@ export type User = {
   id: string,
   permissions: string[]
 };
+
+// TODO Ergänzen registration date & last login date
+//  auch in users.json ergänzen

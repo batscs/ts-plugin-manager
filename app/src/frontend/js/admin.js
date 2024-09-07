@@ -1,3 +1,5 @@
+window.activeIntervals = window.activeIntervals || new Set();
+
 // Function to handle tab selection, API requests, and dynamic JS injection
 function setupTabNavigation(containerSelector, linkSelector, activeClass, contentContainerSelector) {
     const container = document.querySelector(containerSelector);
@@ -56,7 +58,9 @@ function injectTabScript(tabId) {
     // Remove any previously injected script
     const existingScript = document.querySelector('script[data-injected="true"]');
     if (existingScript) {
+        // TODO STOP SCHEDULED FUNCTIONS FROM existing script such as setInterval(updatePluginStatus, 500);
         existingScript.remove();
+        stopAllIntervals();
     }
 
     // Create a new script element
@@ -67,6 +71,13 @@ function injectTabScript(tabId) {
 
     // Append the new script to the body
     document.body.appendChild(script);
+}
+
+function stopAllIntervals() {
+    window.activeIntervals.forEach(intervalId => {
+        clearInterval(intervalId);
+    });
+    window.activeIntervals.clear();  // Clear the set after stopping all intervals
 }
 
 // Initialize tab navigation

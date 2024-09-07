@@ -16,6 +16,7 @@ export interface Plugin {
     isAccessible(permissions: Permissions): boolean;
     getState(): string;
 
+    getLogs(): string[];
     // TODO getLog(): string[] implementieren
     //  das wird witzig das auch ordentlich auf der adminpage zu verwenden, eventuell muss man das umstrukturieren
     //  in seperate page plugin-info für ein spezifisches plugin welches man suchen kann mit custom autocomplete

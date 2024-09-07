@@ -14,7 +14,7 @@ table
 
 script.
     function fetchData() {
-        fetch('/plugin/rnum/data')
+        fetch('/plugin/rNums/data')
             .then(response => response.json())
             .then(data => {
                 const numbers = data.numbers;
@@ -31,3 +31,4 @@ script.
 
     // Call fetchData every 1 second
     setInterval(fetchData, 1000);
+    fetchData();

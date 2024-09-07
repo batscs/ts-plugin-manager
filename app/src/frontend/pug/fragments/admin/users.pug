@@ -1,0 +1,57 @@
+div#wrapper-table
+    table
+        thead
+            tr
+                td
+                    input(type="text", placeholder="username...")
+        tbody
+
+div#selection.flex-column.gap-10px
+    div.flex-row.gap-10px
+        a.bold Username:
+        a#selected-name ?
+
+    div#permissions
+        a.bold pluginNameA
+        div.permission
+            input.check(type="checkbox" name="plugin-a:123")
+            a plugin-a:123
+        div.permission
+            input.check(type="checkbox" name="plugin-a:123")
+            a plugin-a:123
+
+
+style.
+    #permissions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .permission {
+        display: flex;
+        flex-direction: row;
+        justify-content: left;
+        gap: 10px;
+        padding-left: 10px;
+    }
+
+    input[type="checkbox"] {
+        width: 20px;
+    }
+
+    #selection {
+        flex-grow: 3;
+        box-sizing: border-box;
+        padding: 15px;
+    }
+
+    #wrapper-table {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    input {
+        width: 100%;
+    }

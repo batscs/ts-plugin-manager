@@ -7,22 +7,102 @@ import auth from "../../utils/common/authentication";
 import PluginManager from "../../utils/scaling/manager";
 import manager from "../../utils/scaling/manager";
 import Permissions from "../../utils/common/permission";
+import {User} from "../../types/database";
 
 router.get('/api/plugins', (req: Request, res: Response) => {
-    // TODO Permisisons checking
+    const perms: Permissions = req.permission;
 
-    res.send({"plugins": manager.getPluginNames()});
+    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+        res.send({"plugins": manager.getPluginNames()});
+    } else {
+        res.send({"error": "no permissions"});
+    }
+
+});
+
+router.post('/api/admin/users/search', (req: Request, res: Response) => {
+    const perms: Permissions = req.permission;
+    const search: string = req.body.search;
+
+    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_USERS)) {
+        res.send(db.getUsers().filter(user => user.username.includes(search)).map(user => user.username));
+    } else {
+        res.send({"error": "no permissions"});
+    }
+});
+
+router.get('/api/admin/user/:username', (req: Request, res: Response) => {
+    const perms: Permissions = req.permission;
+    const search: string = req.params.username;
+
+    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_USERS)) {
+        const user : User | null = db.getUsers().find(user => user.username == search) || null;
+        let result: {} = {};
+        if (user) {
+            result = {
+                "username": user.username,
+                "permissions": user.permissions
+            }
+        } else {
+            result = {"error": "not found"};
+        }
+        res.send(result);
+    } else {
+        res.send({"error": "no permissions"});
+    }
+});
+
+router.post('/api/admin/user/:username/permission', (req: Request, res: Response) => {
+    const username = req.params.username;
+    const action = req.body.action;
+    const permission = req.body.permission;
+
+    // TODO permission checking admin || manager-users
+
+    // TODO check ob permission überhaupt existiert
+    const users = db.getUsers();
+    const user = users.find(user => user.username == username) || null;
+
+
+
+    if (user == null) {
+        res.send({"error": "user not found"});
+        return;
+    }
+
+    if (action == "added") {
+        user.permissions.push(permission);
+    } else if (action == "removed") {
+        const index = user.permissions.indexOf(permission);
+        user.permissions.splice(index, 1);
+    }
+
+    db.saveUsers(users);
+
+    res.send("success hopefully");
 });
 
 router.get("/api/admin/plugin/:name/info", (req: Request, res: Response) => {
-    // TODO Permisisons checking
+    // TODO Permisisons checking admin || manager-scaling
     const name = req.params.name;
     const plugin = manager.getPlugin(name);
 
     if (plugin == null) {
-        res.send({"status": "?"});
+        res.send({"error": "plugin not found"});
     } else {
         res.send({"status": plugin.getState()});
+    }
+});
+
+router.get("/api/admin/plugin/:name/logs", (req: Request, res: Response) => {
+    // TODO Permisisons checking admin || manager-scaling
+    const name = req.params.name;
+    const plugin = manager.getPlugin(name);
+
+    if (plugin == null) {
+        res.send({"error": "plugin not found"});
+    } else {
+        res.send({"logs": plugin.getLogs()});
     }
 });
 
@@ -64,7 +144,7 @@ router.get('/api/navigation', (req: Request, res: Response) => {
 
     result.push({name: "Homepage", url: "/"});
 
-    if (perms.hasPermission(manager.PERMISSION_ADMIN)) {
+    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER)) {
         result.push({name: "Management", url: "/admin"});
     }
 
@@ -88,8 +168,9 @@ router.get('/api/navigation', (req: Request, res: Response) => {
     res.send({"plugins": result});
 });
 
-router.get('/api/permissions', (req: Request, res: Response) => {
-    res.send({"permissions": manager.getPluginPermissions()});
+router.get('/api/admin/permissions', (req: Request, res: Response) => {
+    // TODO permissions check admin || manager-users
+    res.send(manager.getAllPermissions());
 });
 
 router.post('/api/login', (req: Request, res: Response) => {

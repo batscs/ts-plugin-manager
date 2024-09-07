@@ -10,27 +10,44 @@ class PluginManager {
     private static pluginStates: Record<string, boolean> = {}; // Track plugin start/stop states
 
     public static PERMISSION_ADMIN: string = "pangolin:admin";
+    public static PERMISSION_MANAGER: string = "pangolin:manager";
+    public static PERMISSION_MANAGER_SCALING: string = "pangolin:manager-scaling";
+    public static PERMISSION_MANAGER_USERS: string = "pangolin:manager-users";
+
+    // TODO Irgendwie Methode zum deploy von neuem Plugin/Scale
+    //  public static PERMISSION_MANAGER_DEPLOY: string = "pangolin:manager-deploy";
+
 
     public static healthCheck(): boolean {
+        // TODO use at the beginning of loadPlugins
+
         // TODO Check if no plugin has empty name or invalid name (like having space ' ' in the name or weird characters)
 
         // TODO Check if no plugins plugin.getPermissions() have overlapping permission names
         //  also considering this.getPermissions()
 
-        // TODO Check if no user has permissions that are not used by ANY plugin
-
         // TODO Check if all plugin permissions follow format ${name}:.+
+        //  and no duplicate names, also name 'pangolin' is a reserved name
         return true;
     }
 
+    public static cleanup(): void {
+        // TODO use at the end of loadPlugins
+
+        // TODO Check if no user has permissions that are not used by ANY plugin
+
+        // TODO Remove any plugin from plugins Record that is no longer in scales folder
+    }
+
     public static getPermissions(): string[] {
-        return [this.PERMISSION_ADMIN];
+        return [this.PERMISSION_ADMIN, this.PERMISSION_MANAGER, this.PERMISSION_MANAGER_SCALING, this.PERMISSION_MANAGER_USERS];
     }
 
     public static loadPlugins(app: any): void {
         // TODO Only loadPlugins if healthCheck() returns true
 
         const pluginDirs = fs.readdirSync(PluginManager.pluginsDirectory);
+        // TODO Eventuell check ob directory überhaupt existiert
 
         pluginDirs.forEach((dir) => {
             const pluginPath = path.join(PluginManager.pluginsDirectory, dir);
@@ -134,11 +151,19 @@ class PluginManager {
         return Object.keys(PluginManager.plugins);
     }
 
-    public static getPluginPermissions(): string[] {
-        let result: string[] = [];
+    public static getAllPermissions(): any[] {
+        let result: any[] = [];
 
-        for (const plugin  of Object.values(PluginManager.plugins)) {
-            result = result.concat(plugin.getPermissions());
+        result.push({
+           name: "pangolin",
+            permissions: this.getPermissions()
+        });
+
+        for (const plugin of Object.values(PluginManager.plugins)) {
+            result.push({
+                name: plugin.name,
+                permissions: plugin.getPermissions()
+            });
         }
 
         return result;

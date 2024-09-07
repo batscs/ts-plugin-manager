@@ -7,6 +7,10 @@ import PluginManager from "../../utils/scaling/manager";
 import Permissions from "../../utils/common/permission";
 import manager from "../../utils/scaling/manager";
 
+// TODO /error/permissions/:source oder sowas in der art
+
+// TODO /error/notfound/:source oder sowas in der art
+
 router.get('/', (req: Request, res: Response) => {
     res.render("index");
 });
@@ -24,7 +28,7 @@ router.get('/login', (req: Request, res: Response) => {
 router.get('/admin', (req: Request, res: Response) => {
     const perms: Permissions = req.permission;
 
-    if (perms.hasPermission(manager.PERMISSION_ADMIN)) {
+    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER)) {
         res.render("admin");
     } else {
         res.redirect("/error/no-permissions");

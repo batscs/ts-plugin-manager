@@ -13,11 +13,27 @@ const dir: string = path.join(__dirname, "..", "..", "..", "frontend", "pug");
 const dir_admin: string = path.join(dir, "fragments", "admin");
 
 router.get('/api/html/admin/plugins', (req: Request, res: Response) => {
-    // TODO Permisisons checking
+    const perms: Permissions = req.permission;
 
-    const dir_file = path.join(dir_admin, "plugins.pug");
-    const compiledFunction = pug.compileFile(dir_file);
-    res.send(compiledFunction({plugins: manager.getPluginNames()}));
+    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+        const dir_file = path.join(dir_admin, "plugins.pug");
+        const compiledFunction = pug.compileFile(dir_file);
+        res.send(compiledFunction({plugins: manager.getPluginNames()}));
+    } else {
+        res.send("no permissions");
+    }
+});
+
+router.get('/api/html/admin/users', (req: Request, res: Response) => {
+    const perms: Permissions = req.permission;
+
+    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_USERS)) {
+        const dir_file = path.join(dir_admin, "users.pug");
+        const compiledFunction = pug.compileFile(dir_file);
+        res.send(compiledFunction({plugins: manager.getPluginNames()}));
+    } else {
+        res.send("no permissions");
+    }
 });
 
 export default router;

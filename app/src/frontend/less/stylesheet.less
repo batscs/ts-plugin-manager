@@ -33,14 +33,41 @@ button {
   border-radius: @border-radius;
 }
 
+input {
+  outline: none;
+  border: 2px solid @color-highlight;
+  border-radius: @border-radius;
+  padding: 5px 10px;
+}
+
+input:focus, textarea:focus {
+  border-color: @color-subtle;
+}
+
 .content {
   padding: 50px;
   background-color: @color-main;
   flex-grow: 1;
 }
 
+.bold {
+  font-weight: bold;
+}
+
+.bordered {
+  border: 2px solid @color-highlight
+}
+
 .shadow {
   box-shadow: 0 5px 10px #EFEFEF;
+}
+
+textarea {
+  border-radius: @border-radius;
+  border: none;
+  outline: none;
+  box-sizing: border-box;
+  padding: 10px;
 }
 
 * {

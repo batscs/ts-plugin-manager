@@ -1,10 +1,1 @@
-[
-  {
-    "username": "bats",
-    "password": "123",
-    "id": "123-123-123",
-    "permissions": [
-      "pangolin:admin","rnum:access"
-    ]
-  }
-]
+[{"username":"bats","password":"123","id":"123-123-123","permissions":["pangolin:admin","rNums:access"]}]

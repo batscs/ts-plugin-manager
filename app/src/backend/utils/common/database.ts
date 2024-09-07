@@ -31,7 +31,9 @@ const writeFile = (filename : string, data: string): void => {
 }
 
 export default class db {
+
     static getUsers = (): User[] => {
+        // TODO Abfangen falls users.json nicht existiert, dann einfach []
         return JSON.parse(openFile("users"));
     }
 

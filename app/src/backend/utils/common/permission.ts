@@ -17,12 +17,12 @@ export default class Permissions {
     }
 
     // Method to check if all permissions are granted
-    public hasAllPermissions(permissions: string[]): boolean {
+    public hasAllPermissions(...permissions: string[]): boolean {
         return permissions.every(permission => this.permissions.includes(permission));
     }
 
     // Method to check if any of the given permissions are granted
-    public hasAnyPermission(permissions: string[]): boolean {
+    public hasAnyPermission(...permissions: string[]): boolean {
         return permissions.some(permission => this.permissions.includes(permission));
     }
 
