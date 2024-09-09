@@ -37,7 +37,7 @@ app.set('view engine', 'pug');
 
 app.use('/static/css', express.static(path.join(__dirname, "../../frontend/css")));
 app.use('/static/js', express.static(path.join(__dirname, "../../frontend/js")));
-app.use('/static/resources', express.static(path.join(__dirname, "../../../data/resources")));
+app.use('/static/', express.static(path.join(__dirname, "../../../static")));
 
 app.use(logger);
 
