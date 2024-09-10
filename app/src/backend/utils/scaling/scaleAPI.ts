@@ -13,14 +13,15 @@ export interface Plugin {
     stop(): void;
 
     getPermissions(): string[];
-    isAccessible(permissions: Permissions): boolean;
     getState(): string;
-
     getLogs(): string[];
-    // TODO getLog(): string[] implementieren
-    //  das wird witzig das auch ordentlich auf der adminpage zu verwenden, eventuell muss man das umstrukturieren
-    //  in seperate page plugin-info für ein spezifisches plugin welches man suchen kann mit custom autocomplete
-    //  ja das ist eine gute idee
+
+    isAccessible(permissions: Permissions): boolean;
+    isConfigurable(permissions: Permissions): boolean;
+
+    // TODO getConfiguration(): config[];
+    //  für konfigurieren in Management -> Settings/Configuration
+    //  braucht wahrscheinlich dann auch setConfiguration(configs: config[]);
 
     registerEndpoints(router: Router): void;
 }

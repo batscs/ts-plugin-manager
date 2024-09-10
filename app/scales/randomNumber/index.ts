@@ -17,6 +17,7 @@ class RandomNumberPlugin implements Plugin {
     private logs: string[] = [];
 
     private PERMISSION_ACCESS = `${this.name}:access`;
+    private PERMISSION_CONFIGURE = `${this.name}:configure`;
 
     constructor() {
         this.dbPath = path.join(__dirname, 'numbers.json');
@@ -93,11 +94,7 @@ class RandomNumberPlugin implements Plugin {
     }
 
     getPermissions(): string[] {
-        return [this.PERMISSION_ACCESS];
-    }
-
-    isAccessible(permissions: Permissions): boolean {
-        return permissions.hasPermission(this.PERMISSION_ACCESS);
+        return [this.PERMISSION_CONFIGURE, this.PERMISSION_ACCESS];
     }
 
     getState(): string {
@@ -110,6 +107,14 @@ class RandomNumberPlugin implements Plugin {
 
     addLog(log: string): void {
         this.logs.push(log);
+    }
+
+    isAccessible(permissions: Permissions): boolean {
+        return permissions.hasPermission(this.PERMISSION_ACCESS);
+    }
+
+    isConfigurable(permissions: Permissions): boolean {
+        return permissions.hasPermission(this.PERMISSION_CONFIGURE);
     }
 }
 

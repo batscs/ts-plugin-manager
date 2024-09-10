@@ -151,6 +151,10 @@ class PluginManager {
         return Object.keys(PluginManager.plugins);
     }
 
+    public static getPlugins(): Plugin[] {
+        return Object.values(PluginManager.plugins);
+    }
+
     public static getAllPermissions(): any[] {
         let result: any[] = [];
 

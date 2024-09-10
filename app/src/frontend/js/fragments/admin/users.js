@@ -85,9 +85,20 @@ async function handlePermissionChange(event) {
         action: action
     };
 
+    // Get the selected username from the DOM
+    const selectedUser = document.getElementById('selected-name').textContent;
+
+    // If no user is selected, skip the permission update
+    if (!selectedUser) {
+        console.error('No user selected for permission update.');
+        selectionDiv.style.pointerEvents = 'auto';
+        selectionDiv.style.opacity = '1';
+        return;
+    }
+
     // Send data to the server
     try {
-        const response = await fetch('/api/admin/user/bats/permission', {
+        const response = await fetch(`/api/admin/user/${selectedUser}/permission`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -98,14 +109,11 @@ async function handlePermissionChange(event) {
         if (!response.ok) {
             console.error('Error updating permission:', response.statusText);
         } else {
-            console.log(`Permission ${permissionName} ${action} successfully.`);
+            console.log(`Permission ${permissionName} ${action} for user ${selectedUser} successfully.`);
         }
 
         // After the response, reload permissions for the user
-        const selectedUser = document.getElementById('selected-name').textContent;
-        if (selectedUser) {
-            await loadPermissions(selectedUser);
-        }
+        await loadPermissions(selectedUser);
     } catch (error) {
         console.error('Error updating permission:', error);
     } finally {
@@ -114,6 +122,7 @@ async function handlePermissionChange(event) {
         selectionDiv.style.opacity = '1';
     }
 }
+
 
 // Function to search users based on input
 async function searchUsers(searchTerm) {

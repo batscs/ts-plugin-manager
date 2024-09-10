@@ -13,23 +13,32 @@ if (typeof pluginIntervalId === 'undefined') {
     var pluginIntervalId = null; // Variable to store the plugin status interval
 }
 
+if (typeof isUserInteractingWithTextarea === 'undefined') {
+    var isUserInteractingWithTextarea = false;
+}
+
+if (typeof logsTextarea === 'undefined') {
+    var logsTextarea = document.querySelector('textarea.bordered');
+}
 window.activeIntervals = window.activeIntervals || new Set();
 
 // Function to fetch and update plugin statuses
 function updatePluginStatus()  {
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        const pluginName = row.id.split('-')[1];
-        fetch(`/api/admin/plugin/${pluginName}/info`)
-            .then(response => response.json())
-            .then(data => {
-                row.querySelector('.status').innerText = data.status || 'Unknown';
-            })
-            .catch(error => {
-                console.error(`Error fetching status for ${pluginName}:`, error);
-            });
-    });
-};
+    if (!document.hidden) {
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const pluginName = row.id.split('-')[1];
+            fetch(`/api/admin/plugin/${pluginName}/info`)
+                .then(response => response.json())
+                .then(data => {
+                    row.querySelector('.status').innerText = data.status || 'Unknown';
+                })
+                .catch(error => {
+                    console.error(`Error fetching status for ${pluginName}:`, error);
+                });
+        });
+    }
+}
 
 // Call updatePluginStatus every 500ms
 pluginIntervalId = setInterval(updatePluginStatus, 500);
@@ -37,16 +46,31 @@ window.activeIntervals.add(pluginIntervalId);
 
 // Function to fetch and display logs for the selected plugin
 function updateLogs(pluginName) {
-    fetch(`/api/admin/plugin/${pluginName}/logs`)
-        .then(response => response.json())
-        .then(data => {
-            const logsTextarea = document.querySelector('textarea.bordered');
-            logsTextarea.value = data.logs.join('\n');  // Display logs in textarea
-        })
-        .catch(error => {
-            console.error(`Error fetching logs for ${pluginName}:`, error);
-        });
-};
+    if (!isUserInteractingWithTextarea && !document.hidden) {  // Only update if the user isn't interacting
+        fetch(`/api/admin/plugin/${pluginName}/logs`)
+            .then(response => response.json())
+            .then(data => {
+                logsTextarea.value = data.logs.join('\n');  // Display logs in textarea
+            })
+            .catch(error => {
+                console.error(`Error fetching logs for ${pluginName}:`, error);
+            });
+    }
+}
+
+// Attach event listeners to detect user interaction with textarea
+logsTextarea.addEventListener('focus', () => {
+    isUserInteractingWithTextarea = true;  // Pause logs update
+});
+
+logsTextarea.addEventListener('blur', () => {
+    isUserInteractingWithTextarea = false;  // Resume logs update
+});
+
+// Optional: Detect selection changes to also pause during text selection
+logsTextarea.addEventListener('select', () => {
+    isUserInteractingWithTextarea = true;  // Pause logs update during selection
+});
 
 // Attach event listeners to Start, Stop, and Select buttons
 document.querySelectorAll('tbody tr').forEach(row => {
