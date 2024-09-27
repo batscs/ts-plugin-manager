@@ -1,4 +1,4 @@
-import { Plugin } from '../../src/backend/utils/scaling/scaleAPI';
+import { Plugin } from '../../src/backend/utils/scaling/scale-api';
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -11,6 +11,7 @@ class RandomNumberPlugin implements Plugin {
     name: string = 'rNums';
     version: string = '1.0.0';
     running: boolean = false;
+    uuid: string | undefined;
 
     private pythonProcess: ChildProcess | null = null;
     private readonly dbPath: string;
@@ -106,6 +107,7 @@ class RandomNumberPlugin implements Plugin {
     }
 
     addLog(log: string): void {
+        console.log(`${this.name} (${this.uuid}): ${log}`);
         this.logs.push(log);
     }
 

@@ -46,7 +46,6 @@ app.use(router_api);
 app.use(router_html);
 
 manager.loadPlugins(app);
-manager.loadPlugins(app);
 
 manager.startPlugins();
 

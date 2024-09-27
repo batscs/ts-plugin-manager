@@ -15,13 +15,13 @@ const dir_admin: string = path.join(dir, "fragments", "admin");
 router.get('/api/html/admin/plugins', (req: Request, res: Response) => {
     const perms: Permissions = req.permission;
 
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER)) {
         const dir_file = path.join(dir_admin, "plugins.pug");
         const compiledFunction = pug.compileFile(dir_file);
 
         let plugins = manager.getPlugins();
 
-        if (!perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+        if (!perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
             plugins = plugins.filter(plugin => plugin.isConfigurable(perms));
         }
 
@@ -36,7 +36,7 @@ router.get('/api/html/admin/plugins', (req: Request, res: Response) => {
 router.get('/api/html/admin/users', (req: Request, res: Response) => {
     const perms: Permissions = req.permission;
 
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER)) {
         const dir_file = path.join(dir_admin, "users.pug");
         const compiledFunction = pug.compileFile(dir_file);
         res.send(compiledFunction({plugins: manager.getPluginNames()}));

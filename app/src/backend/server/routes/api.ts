@@ -13,7 +13,7 @@ import {User} from "../../types/database";
 router.get('/api/admin/plugin/plugins', (req: Request, res: Response) => {
     const perms: Permissions = req.permission;
 
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
         res.send({"plugins": manager.getPluginNames()});
     } else {
         res.send({"error": "no permissions"});
@@ -24,7 +24,7 @@ router.post('/api/admin/users/search', (req: Request, res: Response) => {
     const perms: Permissions = req.permission;
     const search: string = req.body.search;
 
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_USERS)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_USERS)) {
         res.send(db.getUsers().filter(user => user.username.includes(search)).map(user => user.username));
     } else {
         res.send({"error": "no permissions"});
@@ -35,7 +35,7 @@ router.get('/api/admin/user/:username', (req: Request, res: Response) => {
     const perms: Permissions = req.permission;
     const search: string = req.params.username;
 
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_USERS)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_USERS)) {
         const user : User | null = db.getUsers().find(user => user.username == search) || null;
         let result: {} = {};
         if (user) {
@@ -88,7 +88,7 @@ router.get("/api/admin/plugin/:name/info", (req: Request, res: Response) => {
 
     if (plugin == null) {
         res.send({"error": "plugin not found"});
-    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
         res.send({"status": plugin.getState()});
     } else {
         res.send({error: "unauthorized"});
@@ -102,7 +102,7 @@ router.get("/api/admin/plugin/:name/logs", (req: Request, res: Response) => {
 
     if (plugin == null) {
         res.send({"error": "plugin not found"});
-    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
         res.send({"logs": plugin.getLogs()});
     } else {
         res.send({error: "unauthorized"});
@@ -116,7 +116,7 @@ router.get("/api/admin/plugin/:name/stop", (req: Request, res: Response) => {
 
     if (plugin == null) {
         res.send({"error": "no plugin"});
-    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
         plugin.stop();
         res.send({"status": plugin.getState()});
     } else {
@@ -131,7 +131,7 @@ router.get("/api/admin/plugin/:name/start", (req: Request, res: Response) => {
 
     if (plugin == null) {
         res.send({"error": "no plugin"});
-    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_SCALING)) {
+    } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
         plugin.start();
         res.send({"status": plugin.getState()});
     } else {
@@ -151,7 +151,7 @@ router.get('/api/navigation', (req: Request, res: Response) => {
 
     result.push({name: "Homepage", url: "/"});
 
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER)) {
         result.push({name: "Management", url: "/admin"});
     }
 
@@ -166,7 +166,7 @@ router.get('/api/navigation', (req: Request, res: Response) => {
     // TODO zu jedem plugin {} noch ergänzen {running: true/false}
     //  im frontend dann anzeigen lassen ob running oder nicht anklickbar
 
-    Object.values(manager.plugins).forEach(plugin => {
+    manager.getPlugins().forEach(plugin => {
         if (plugin.isAccessible(perms)) {
             result.push({name: plugin.name, url: `/plugin/${plugin.name}`});
         }
@@ -178,7 +178,7 @@ router.get('/api/navigation', (req: Request, res: Response) => {
 router.get('/api/admin/permissions', (req: Request, res: Response) => {
     // TODO permissions check admin || manager-users
     const perms : Permissions = req.permission;
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER_USERS)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_USERS)) {
         res.send(manager.getAllPermissions());
     } else {
        res.send({error: "unauthorized"})

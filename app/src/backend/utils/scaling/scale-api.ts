@@ -4,6 +4,7 @@ import Permissions from "../common/permission";
 export interface Plugin {
     name: string;    // Plugin name
     version: string; // Plugin version
+    uuid?: string;   // Optional UUID field
 
     // TODO eventuell shortname: string
     //  eventuell zwanghaft die permissions mit prefix vom shortname forcen

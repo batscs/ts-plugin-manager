@@ -1,180 +1,282 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import {Plugin} from './scaleAPI';
+import { Plugin } from './scale-api';
 import express from "express";
+import { v4 as uuidv4 } from 'uuid';
 
 class PluginManager {
     private static pluginsDirectory: string = path.join(__dirname, "..", "..", "..", "..", 'scales');
-    // TODO Maybe getter statt public
-    public static plugins: Record<string, Plugin> = {};
-    private static pluginStates: Record<string, boolean> = {}; // Track plugin start/stop states
+    private static plugins: Map<string, Plugin> = new Map(); // Store registered plugins
+    private static pluginUUIDs: Map<string, string> = new Map(); // Store UUIDs by plugin name
+    private static allPermissions: Set<string> = new Set(); // Centralized permission tracking
 
-    public static PERMISSION_ADMIN: string = "pangolin:admin";
-    public static PERMISSION_MANAGER: string = "pangolin:manager";
-    public static PERMISSION_MANAGER_SCALING: string = "pangolin:manager-scaling";
-    public static PERMISSION_MANAGER_USERS: string = "pangolin:manager-users";
+    public static readonly PERMISSIONS = {
+        ADMIN: "pangolin:admin",
+        MANAGER: "pangolin:manager",
+        MANAGER_SCALING: "pangolin:manager-scaling",
+        MANAGER_USERS: "pangolin:manager-users",
+    };
 
-    // TODO Irgendwie Methode zum deploy von neuem Plugin/Scale
-    //  public static PERMISSION_MANAGER_DEPLOY: string = "pangolin:manager-deploy";
-
-
+    /**
+     * Performs a health check to ensure plugins are valid before loading.
+     * Validates plugin names, permission overlaps, and permission format.
+     */
     public static healthCheck(): boolean {
-        // TODO use at the beginning of loadPlugins
+        for (const [name, plugin] of PluginManager.plugins) {
+            if (!this.isPluginNameValid(name)) {
+                return false;
+            }
 
-        // TODO Check if no plugin has empty name or invalid name (like having space ' ' in the name or weird characters)
+            if (!this.isPermissionStructureValid(name, plugin.getPermissions())) {
+                return false;
+            }
 
-        // TODO Check if no plugins plugin.getPermissions() have overlapping permission names
-        //  also considering this.getPermissions()
-
-        // TODO Check if all plugin permissions follow format ${name}:.+
-        //  and no duplicate names, also name 'pangolin' is a reserved name
+            // Reserved names conflict check
+            if (this.isReservedName(name) || plugin.getPermissions().some(p => this.isReservedPermission(p))) {
+                console.error(`Manager: Plugin ${name} is using reserved names or permissions.`);
+                return false;
+            }
+        }
         return true;
     }
 
+    /**
+     * Cleans up unused plugins and permissions.
+     */
     public static cleanup(): void {
-        // TODO use at the end of loadPlugins
+        const currentPluginDirs = new Set(fs.readdirSync(PluginManager.pluginsDirectory));
 
-        // TODO Check if no user has permissions that are not used by ANY plugin
+        for (const pluginName of PluginManager.plugins.keys()) {
+            if (!currentPluginDirs.has(pluginName)) {
+                console.log(`Manager: Cleaning up unregistered plugin ${pluginName}.`);
+                PluginManager.plugins.delete(pluginName);
+            }
+        }
 
-        // TODO Remove any plugin from plugins Record that is no longer in scales folder
+        // Rebuild permissions after cleanup
+        this.rebuildPermissions();
     }
 
     public static getPermissions(): string[] {
-        return [this.PERMISSION_ADMIN, this.PERMISSION_MANAGER, this.PERMISSION_MANAGER_SCALING, this.PERMISSION_MANAGER_USERS];
+        return Object.values(this.PERMISSIONS);
     }
 
-    public static loadPlugins(app: any): void {
-        // TODO Only loadPlugins if healthCheck() returns true
-
+    /**
+     * Load and register all plugins from the plugins directory.
+     */
+    public static loadPlugins(app: express.Application): void {
         const pluginDirs = fs.readdirSync(PluginManager.pluginsDirectory);
-        // TODO Eventuell check ob directory überhaupt existiert
+        if (!fs.existsSync(PluginManager.pluginsDirectory)) {
+            console.error(`Manager: Plugin directory '${PluginManager.pluginsDirectory}' not found.`);
+            return;
+        }
 
         pluginDirs.forEach((dir) => {
             const pluginPath = path.join(PluginManager.pluginsDirectory, dir);
-
             if (fs.statSync(pluginPath).isDirectory()) {
-                const pluginModule = require(pluginPath);
-                // TODO catch if not a plugin interface implementation
-                const plugin: Plugin = pluginModule.default;
-                const name : string = plugin.name;
+                try {
+                    const pluginModule = require(pluginPath);
+                    if (pluginModule && pluginModule.default) {
+                        const plugin: Plugin = pluginModule.default;
 
-                if (!PluginManager.plugins[name]) { // Only load if not already registered
-                    try {
-                        PluginManager.plugins[plugin.name] = plugin;
-                        PluginManager.pluginStates[plugin.name] = false; // Mark plugin as registered but not started
-                        console.log(`Manager: Plugin ${plugin.name} registered.`);
-                        plugin.initialize();
-                        const router = express.Router();
-
-                        // Register endpoints with the new router
-                        plugin.registerEndpoints(router);
-
-                        // Use the router under /plugin/{pluginName}
-                        app.use(`/plugin/${plugin.name}`, router);
-                    } catch (error) {
-                        console.error(`Manager: Failed to load plugin at ${pluginPath}:`, error);
+                        if (!this.registerPlugin(plugin, app)) {
+                            console.error(`Manager: Plugin ${plugin.name} could not be registered due to conflicts.`);
+                        }
+                    } else {
+                        throw new Error(`No default export found in plugin module at ${pluginPath}.`);
                     }
-                } else {
-                    console.log(`Manager: Plugin ${dir} is already registered.`);
+                } catch (error) {
+                    console.error(`Manager: Failed to load plugin at ${pluginPath}:`, error);
                 }
             }
         });
     }
 
+    /**
+     * Register the plugin and assign a UUID if it passes all conflict checks.
+     * @param plugin Plugin to register
+     * @param app Express application for registering endpoints
+     * @returns boolean indicating success or failure of registration
+     */
+    private static registerPlugin(plugin: Plugin, app: express.Application): boolean {
+        const name = plugin.name;
+
+        // Check for name or permission conflicts
+        if (!this.isPluginNameValid(name) || !this.isPermissionStructureValid(name, plugin.getPermissions())) {
+            return false;
+        }
+
+        // Check if plugin name conflicts with reserved names
+        if (this.isReservedName(name)) {
+            console.error(`Manager: Plugin name '${name}' is reserved and cannot be used.`);
+            return false;
+        }
+
+        // Ensure no permission conflicts
+        if (plugin.getPermissions().some(p => this.isReservedPermission(p) || this.allPermissions.has(p))) {
+            console.error(`Manager: Plugin ${name} has permission conflicts.`);
+            return false;
+        }
+
+        try {
+            // Generate or retrieve UUID
+            let pluginUUID = this.pluginUUIDs.get(name) || uuidv4(); // Either retrieve an existing UUID or generate a new one
+            this.pluginUUIDs.set(name, pluginUUID); // Store UUID for future use
+            plugin.uuid = pluginUUID; // Pass UUID to the plugin
+
+            console.log(`Manager: Plugin ${name} registered successfully with UUID ${pluginUUID}, initializing now...`);
+            plugin.initialize();
+            PluginManager.plugins.set(name, plugin);
+
+            // Register the plugin's permissions
+            plugin.getPermissions().forEach(perm => this.allPermissions.add(perm));
+
+            const router = express.Router();
+            plugin.registerEndpoints(router);
+            app.use(`/plugin/${name}`, router);
+
+            return true;
+        } catch (error) {
+            console.error(`Manager: Failed to initialize plugin ${name}:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Validate if a plugin name is valid (no spaces, special chars).
+     */
+    private static isPluginNameValid(name: string): boolean {
+        if (!name || name.includes(" ") || /[^a-zA-Z0-9_-]/.test(name)) {
+            console.error(`Manager: Invalid plugin name '${name}'.`);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Validate if the plugin permissions are well-structured (prefix with plugin name).
+     */
+    private static isPermissionStructureValid(name: string, permissions: string[]): boolean {
+        const valid = permissions.every(perm => perm.startsWith(`${name}:`));
+        if (!valid) {
+            console.error(`Manager: Plugin ${name} has permissions that do not follow the ${name}: prefix format.`);
+        }
+        return valid;
+    }
+
+    /**
+     * Check if a name is reserved.
+     */
+    private static isReservedName(name: string): boolean {
+        return name === 'pangolin';
+    }
+
+    /**
+     * Check if a permission is reserved.
+     */
+    private static isReservedPermission(permission: string): boolean {
+        return permission.startsWith('pangolin:');
+    }
+
+    /**
+     * Start all registered plugins.
+     */
     public static startPlugins(): void {
-        for (const [name, plugin] of Object.entries(PluginManager.plugins)) {
-            if (!PluginManager.pluginStates[name]) { // Only start if not already started
+        this.managePlugins(true);
+    }
+
+    /**
+     * Stop all registered plugins.
+     */
+    public static stopPlugins(): void {
+        this.managePlugins(false);
+    }
+
+    /**
+     * Manage (start/stop) all registered plugins.
+     */
+    private static managePlugins(start: boolean): void {
+        for (const [name, plugin] of PluginManager.plugins) {
+            if (start) {
                 try {
-                    PluginManager.pluginStates[name] = true;
-                    console.log(`Manager: Plugin ${name} started.`);
                     plugin.start();
+                    console.log(`Manager: Plugin ${name} started.`);
                 } catch (error) {
                     console.error(`Manager: Failed to start plugin ${name}:`, error);
                 }
             } else {
-                console.log(`Manager: Plugin ${name} is already started.`);
+                try {
+                    plugin.stop();
+                    console.log(`Manager: Plugin ${name} stopped.`);
+                } catch (error) {
+                    console.error(`Manager: Failed to stop plugin ${name}:`, error);
+                }
             }
         }
     }
 
     public static startPlugin(name: string): void {
-        const plugin = PluginManager.plugins[name];
-        if (plugin && !PluginManager.pluginStates[name]) {
-            try {
-                PluginManager.pluginStates[name] = true;
-                console.log(`Manager: Plugin ${name} started.`);
-                plugin.start();
-            } catch (error) {
-                console.error(`Manager: Failed to start plugin ${name}:`, error);
-            }
-        } else if (PluginManager.pluginStates[name]) {
-            console.log(`Manager: Plugin ${name} is already started.`);
-        } else {
-            console.log(`Manager: Plugin ${name} is not registered.`);
-        }
-    }
-
-    public static stopPlugins(): void {
-        for (const [name, plugin] of Object.entries(PluginManager.plugins)) {
-            if (PluginManager.pluginStates[name]) { // Only stop if started
-                try {
-                    PluginManager.pluginStates[name] = false;
-                    console.log(`Manager: Plugin ${name} stopped.`);
-                    plugin.stop();
-                } catch (error) {
-                    console.error(`Manager: Failed to stop plugin ${name}:`, error);
-                }
-            } else {
-                console.log(`Manager: Plugin ${name} is already stopped.`);
-            }
-        }
+        this.managePlugin(name, true);
     }
 
     public static stopPlugin(name: string): void {
-        const plugin = PluginManager.plugins[name];
-        if (plugin && PluginManager.pluginStates[name]) {
+        this.managePlugin(name, false);
+    }
+
+    private static managePlugin(name: string, start: boolean): void {
+        const plugin = PluginManager.plugins.get(name);
+        if (!plugin) {
+            console.error(`Manager: Plugin ${name} is not registered.`);
+            return;
+        }
+
+        if (start) {
             try {
-                PluginManager.pluginStates[name] = false;
-                console.log(`Manager: Plugin ${name} stopped.`);
+                plugin.start();
+                console.log(`Manager: Plugin ${name} started.`);
+            } catch (error) {
+                console.error(`Manager: Failed to start plugin ${name}:`, error);
+            }
+        } else {
+            try {
                 plugin.stop();
+                console.log(`Manager: Plugin ${name} stopped.`);
             } catch (error) {
                 console.error(`Manager: Failed to stop plugin ${name}:`, error);
             }
-        } else if (!PluginManager.pluginStates[name]) {
-            console.log(`Manager: Plugin ${name} is already stopped.`);
-        } else {
-            console.log(`Manager: Plugin ${name} is not registered.`);
         }
     }
 
     public static getPluginNames(): string[] {
-        return Object.keys(PluginManager.plugins);
+        return Array.from(PluginManager.plugins.keys());
     }
 
     public static getPlugins(): Plugin[] {
-        return Object.values(PluginManager.plugins);
+        return Array.from(PluginManager.plugins.values());
     }
 
     public static getAllPermissions(): any[] {
-        let result: any[] = [];
-
-        result.push({
-           name: "pangolin",
-            permissions: this.getPermissions()
-        });
-
-        for (const plugin of Object.values(PluginManager.plugins)) {
-            result.push({
+        return [
+            { name: 'pangolin', permissions: this.getPermissions() },
+            ...Array.from(PluginManager.plugins.values()).map(plugin => ({
                 name: plugin.name,
-                permissions: plugin.getPermissions()
-            });
-        }
-
-        return result;
+                permissions: plugin.getPermissions(),
+            }))
+        ];
     }
 
     public static getPlugin(name: string): Plugin | null {
-        return PluginManager.plugins[name] || null;
+        return PluginManager.plugins.get(name) || null;
+    }
+
+    /**
+     * Rebuilds all permissions when plugins are removed.
+     */
+    private static rebuildPermissions(): void {
+        this.allPermissions.clear();
+        PluginManager.plugins.forEach(plugin => {
+            plugin.getPermissions().forEach(perm => this.allPermissions.add(perm));
+        });
     }
 }
 

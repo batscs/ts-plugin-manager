@@ -28,7 +28,7 @@ router.get('/login', (req: Request, res: Response) => {
 router.get('/admin', (req: Request, res: Response) => {
     const perms: Permissions = req.permission;
 
-    if (perms.hasAnyPermission(manager.PERMISSION_ADMIN, manager.PERMISSION_MANAGER)) {
+    if (perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER)) {
         res.render("admin");
     } else {
         res.render("error", {error: "not authorized to access this ressource"});
