@@ -117,7 +117,7 @@ router.get("/api/admin/plugin/:name/stop", (req: Request, res: Response) => {
     if (plugin == null) {
         res.send({"error": "no plugin"});
     } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
-        plugin.stop();
+        manager.stopPlugin(name);
         res.send({"status": plugin.getState()});
     } else {
         res.send({error: "unauthorized"});
@@ -132,7 +132,7 @@ router.get("/api/admin/plugin/:name/start", (req: Request, res: Response) => {
     if (plugin == null) {
         res.send({"error": "no plugin"});
     } else if (plugin.isConfigurable(perms) || perms.hasAnyPermission(manager.PERMISSIONS.ADMIN, manager.PERMISSIONS.MANAGER_SCALING)) {
-        plugin.start();
+        manager.startPlugin(name);
         res.send({"status": plugin.getState()});
     } else {
         res.send({error: "unauthorized"});

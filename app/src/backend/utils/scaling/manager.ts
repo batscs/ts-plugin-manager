@@ -8,7 +8,6 @@ class PluginManager {
     private static pluginsDirectory: string = path.join(__dirname, "..", "..", "..", "..", 'scales');
     private static plugins: Map<string, Plugin> = new Map(); // Store registered plugins
     private static pluginUUIDs: Map<string, string> = new Map(); // Store UUIDs by plugin name
-    private static allPermissions: Set<string> = new Set(); // Centralized permission tracking
 
     public static readonly PERMISSIONS = {
         ADMIN: "pangolin:admin",
@@ -52,9 +51,6 @@ class PluginManager {
                 PluginManager.plugins.delete(pluginName);
             }
         }
-
-        // Rebuild permissions after cleanup
-        this.rebuildPermissions();
     }
 
     public static getPermissions(): string[] {
@@ -83,7 +79,7 @@ class PluginManager {
                             console.error(`Manager: Plugin ${plugin.name} could not be registered due to conflicts.`);
                         }
                     } else {
-                        throw new Error(`No default export found in plugin module at ${pluginPath}.`);
+                        console.error(`No default export found in plugin module at ${pluginPath}.`);
                     }
                 } catch (error) {
                     console.error(`Manager: Failed to load plugin at ${pluginPath}:`, error);
@@ -112,8 +108,11 @@ class PluginManager {
             return false;
         }
 
+        let allPerms: string[] = this.getAllPermissions().flatMap(item => item.permissions);
+
         // Ensure no permission conflicts
-        if (plugin.getPermissions().some(p => this.isReservedPermission(p) || this.allPermissions.has(p))) {
+        if (plugin.getPermissions().some(p => this.isReservedPermission(p)
+            || allPerms.some(perm => plugin.getPermissions().some(pluginPerm => pluginPerm == perm)))) {
             console.error(`Manager: Plugin ${name} has permission conflicts.`);
             return false;
         }
@@ -127,9 +126,6 @@ class PluginManager {
             console.log(`Manager: Plugin ${name} registered successfully with UUID ${pluginUUID}, initializing now...`);
             plugin.initialize();
             PluginManager.plugins.set(name, plugin);
-
-            // Register the plugin's permissions
-            plugin.getPermissions().forEach(perm => this.allPermissions.add(perm));
 
             const router = express.Router();
             plugin.registerEndpoints(router);
@@ -255,7 +251,7 @@ class PluginManager {
         return Array.from(PluginManager.plugins.values());
     }
 
-    public static getAllPermissions(): any[] {
+    public static getAllPermissions(): {name: string, permissions: string[]}[] {
         return [
             { name: 'pangolin', permissions: this.getPermissions() },
             ...Array.from(PluginManager.plugins.values()).map(plugin => ({
@@ -269,15 +265,6 @@ class PluginManager {
         return PluginManager.plugins.get(name) || null;
     }
 
-    /**
-     * Rebuilds all permissions when plugins are removed.
-     */
-    private static rebuildPermissions(): void {
-        this.allPermissions.clear();
-        PluginManager.plugins.forEach(plugin => {
-            plugin.getPermissions().forEach(perm => this.allPermissions.add(perm));
-        });
-    }
 }
 
 export default PluginManager;
